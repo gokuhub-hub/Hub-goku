@@ -1,1095 +1,684 @@
 --// GOKU BLACK
---// MENÚ COMPACTO + AIM ASSIST
---// Para tu propio proyecto de Roblox Studio
---// LocalScript → StarterPlayer > StarterPlayerScripts
+--// Roblox Studio - LocalScript
+--// StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-
---==================================================
--- VARIABLES
---==================================================
 
 local AimbotEnabled = false
-local AimSilentEnabled = false
-
 local FOVEnabled = true
 local FOVPercent = 50
 
-local AimSilentFOV = 50
-local AimSmoothness = 0.25
-local AimMaxDistance = 500
-
--- Objetivo bloqueado.
--- Mientras siga siendo válido, el aimbot no cambia de cabeza.
-local LockedTarget = nil
-
+local ESPPlayerEnabled = false
 local SpeedEnabled = false
 local SpeedPercent = 50
-
 local JumpEnabled = false
 local JumpPercent = 50
 
-local InfiniteJumpEnabled = false
-local NoclipEnabled = false
-
 --==================================================
--- GUI PRINCIPAL
+-- 1. BASE DE LA PANTALLA
 --==================================================
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "GokuBlackUI"
-gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local main = Instance.new("Frame")
-main.Size = UDim2.fromOffset(500, 350)
-main.Position = UDim2.new(0.5, -250, 0.5, -175)
-main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-main.BorderSizePixel = 0
-main.Parent = gui
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = main
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GokuBlack"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
 
 --==================================================
--- TÍTULO
+-- 2. VENTANA PRINCIPAL
 --==================================================
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -55, 0, 42)
-title.Position = UDim2.fromOffset(12, 0)
-title.BackgroundTransparency = 1
-title.Text = "⚡ GOKU BLACK"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 19
-title.Font = Enum.Font.GothamBold
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = main
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "VentanaPrincipal"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BackgroundTransparency = 0.35
+MainFrame.BorderSizePixel = 0
+MainFrame.Size = UDim2.new(0, 450, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local RedondeadoFrame = Instance.new("UICorner")
+RedondeadoFrame.CornerRadius = UDim.new(0, 16)
+RedondeadoFrame.Parent = MainFrame
 
 --==================================================
--- BOTÓN X
+-- 3. LISTA IZQUIERDA
 --==================================================
 
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.fromOffset(36, 36)
-closeButton.Position = UDim2.new(1, -42, 0, 3)
-closeButton.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
-closeButton.Text = "X"
-closeButton.TextColor3 = Color3.new(1, 1, 1)
-closeButton.TextSize = 17
-closeButton.Font = Enum.Font.GothamBold
-closeButton.BorderSizePixel = 0
-closeButton.Parent = main
+local ListaIzquierda = Instance.new("Frame")
+ListaIzquierda.Name = "ListaPestañas"
+ListaIzquierda.Parent = MainFrame
+ListaIzquierda.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+ListaIzquierda.BackgroundTransparency = 0.5
+ListaIzquierda.BorderSizePixel = 0
+ListaIzquierda.Size = UDim2.new(0, 120, 1, 0)
+ListaIzquierda.Position = UDim2.new(0, 0, 0, 0)
 
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 6)
-closeCorner.Parent = closeButton
+local RedondeadoLista = Instance.new("UICorner")
+RedondeadoLista.CornerRadius = UDim.new(0, 16)
+RedondeadoLista.Parent = ListaIzquierda
 
---==================================================
--- SIDEBAR
---==================================================
-
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.fromOffset(125, 285)
-sidebar.Position = UDim2.fromOffset(10, 50)
-sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-sidebar.BorderSizePixel = 0
-sidebar.Parent = main
-
-local sideCorner = Instance.new("UICorner")
-sideCorner.CornerRadius = UDim.new(0, 6)
-sideCorner.Parent = sidebar
-
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -150, 1, -60)
-content.Position = UDim2.fromOffset(140, 50)
-content.BackgroundTransparency = 1
-content.Parent = main
-
-local tabs = {}
-local pages = {}
+local Titulo = Instance.new("TextLabel")
+Titulo.Parent = ListaIzquierda
+Titulo.BackgroundTransparency = 1
+Titulo.Size = UDim2.new(1, 0, 0, 40)
+Titulo.Position = UDim2.new(0, 0, 0, 15)
+Titulo.Text = "GOKU BLACK"
+Titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
+Titulo.TextSize = 16
+Titulo.Font = Enum.Font.GothamBold
 
 --==================================================
--- CREAR PESTAÑA
+-- BOTONES DE LA LISTA
 --==================================================
 
-local function createTab(name, order, locked)
+local BotonLista1 = Instance.new("TextButton")
+BotonLista1.Parent = ListaIzquierda
+BotonLista1.BackgroundTransparency = 1
+BotonLista1.Size = UDim2.new(1, 0, 0, 35)
+BotonLista1.Position = UDim2.new(0, 0, 0, 60)
+BotonLista1.Text = "• General"
+BotonLista1.TextColor3 = Color3.fromRGB(255, 255, 255)
+BotonLista1.TextSize = 14
+BotonLista1.Font = Enum.Font.GothamSemibold
 
-local button = Instance.new("TextButton")  
-button.Size = UDim2.new(1, -10, 0, 38)  
-button.Position = UDim2.fromOffset(  
-	5,  
-	5 + ((order - 1) * 43)  
-)  
+local BotonLista2 = Instance.new("TextButton")
+BotonLista2.Parent = ListaIzquierda
+BotonLista2.BackgroundTransparency = 1
+BotonLista2.Size = UDim2.new(1, 0, 0, 35)
+BotonLista2.Position = UDim2.new(0, 0, 0, 95)
+BotonLista2.Text = "• Combat"
+BotonLista2.TextColor3 = Color3.fromRGB(180, 180, 180)
+BotonLista2.TextSize = 14
+BotonLista2.Font = Enum.Font.GothamSemibold
 
-button.BackgroundColor3 = Color3.fromRGB(35, 35, 42)  
+local BotonLista3 = Instance.new("TextButton")
+BotonLista3.Parent = ListaIzquierda
+BotonLista3.BackgroundTransparency = 1
+BotonLista3.Size = UDim2.new(1, 0, 0, 35)
+BotonLista3.Position = UDim2.new(0, 0, 0, 130)
+BotonLista3.Text = "• Player"
+BotonLista3.TextColor3 = Color3.fromRGB(180, 180, 180)
+BotonLista3.TextSize = 14
+BotonLista3.Font = Enum.Font.GothamSemibold
 
-button.Text = locked  
-	and name .. " 🔒"  
-	or name  
+local BotonLista4 = Instance.new("TextButton")
+BotonLista4.Parent = ListaIzquierda
+BotonLista4.BackgroundTransparency = 1
+BotonLista4.Size = UDim2.new(1, 0, 0, 35)
+BotonLista4.Position = UDim2.new(0, 0, 0, 165)
+BotonLista4.Text = "• Setting"
+BotonLista4.TextColor3 = Color3.fromRGB(180, 180, 180)
+BotonLista4.TextSize = 14
+BotonLista4.Font = Enum.Font.GothamSemibold
 
-button.TextColor3 = locked  
-	and Color3.fromRGB(120, 120, 125)  
-	or Color3.fromRGB(225, 225, 225)  
+--==================================================
+-- 4. CONTENEDOR DERECHO
+--==================================================
 
-button.TextSize = 14  
-button.Font = Enum.Font.GothamBold  
-button.BorderSizePixel = 0  
-button.Parent = sidebar  
+local ContenedorDerecho = Instance.new("Frame")
+ContenedorDerecho.Name = "ZonaDeBotones"
+ContenedorDerecho.Parent = MainFrame
+ContenedorDerecho.BackgroundTransparency = 1
+ContenedorDerecho.Size = UDim2.new(1, -130, 1, -60)
+ContenedorDerecho.Position = UDim2.new(0, 130, 0, 50)
 
-local bc = Instance.new("UICorner")  
-bc.CornerRadius = UDim.new(0, 5)  
-bc.Parent = button  
+local function crearPagina(nombre)
+	local pagina = Instance.new("ScrollingFrame")
+	pagina.Name = nombre
+	pagina.Parent = ContenedorDerecho
+	pagina.Size = UDim2.fromScale(1, 1)
+	pagina.BackgroundTransparency = 1
+	pagina.BorderSizePixel = 0
+	pagina.ScrollBarThickness = 3
+	pagina.CanvasSize = UDim2.new(0, 0, 0, 400)
+	pagina.Visible = false
 
-local page = Instance.new("ScrollingFrame")  
-page.Size = UDim2.new(1, 0, 1, 0)  
-page.BackgroundTransparency = 1  
-page.BorderSizePixel = 0  
-page.ScrollBarThickness = 3  
-page.Visible = false  
-page.CanvasSize = UDim2.new(0, 0, 0, 0)  
-page.Parent = content  
-
-local layout = Instance.new("UIListLayout")  
-layout.Padding = UDim.new(0, 7)  
-layout.Parent = page  
-
-layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()  
-	page.CanvasSize = UDim2.fromOffset(  
-		0,  
-		layout.AbsoluteContentSize.Y + 10  
-	)  
-end)  
-
-tabs[name] = button  
-pages[name] = page  
-
-if not locked then  
-
-	button.MouseButton1Click:Connect(function()  
-
-		for _, p in pairs(pages) do  
-			p.Visible = false  
-		end  
-
-		for _, b in pairs(tabs) do  
-			b.BackgroundColor3 =  
-				Color3.fromRGB(35, 35, 42)  
-		end  
-
-		page.Visible = true  
-
-		button.BackgroundColor3 =  
-			Color3.fromRGB(120, 45, 110)  
-
-	end)  
-
-end  
-
-return page
-
+	return pagina
 end
 
---==================================================
--- PESTAÑAS
---==================================================
-
-local GeneralTab =
-createTab("General", 1, false)
-
-local CombatTab =
-createTab("Combat", 2, false)
-
-local SettingsTab =
-createTab("Settings", 3, false)
-
-createTab("Próximamente", 4, true)
+local GeneralPage = crearPagina("General")
+local CombatPage = crearPagina("Combat")
+local PlayerPage = crearPagina("Player")
+local SettingPage = crearPagina("Setting")
 
 --==================================================
--- FUNCIONES GUI
+-- FUNCIONES DE CONTROLES
 --==================================================
 
-local function createSection(parent, text)
+local function crearToggle(parent, texto, estado, callback, y)
+	local boton = Instance.new("TextButton")
+	boton.Parent = parent
+	boton.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+	boton.BorderSizePixel = 0
+	boton.Size = UDim2.new(1, -10, 0, 38)
+	boton.Position = UDim2.new(0, 5, 0, y)
+	boton.TextSize = 14
+	boton.Font = Enum.Font.GothamBold
 
-local section = Instance.new("TextLabel")  
-section.Size = UDim2.new(1, -5, 0, 25)  
-section.BackgroundTransparency = 1  
-section.Text = text  
-section.TextColor3 = Color3.fromRGB(220, 120, 210)  
-section.TextSize = 15  
-section.Font = Enum.Font.GothamBold  
-section.TextXAlignment = Enum.TextXAlignment.Left  
-section.Parent = parent
+	local activo = estado
 
+	local function actualizar()
+		boton.Text = texto .. ": " .. (activo and "ON" or "OFF")
+
+		if activo then
+			boton.TextColor3 = Color3.fromRGB(120, 255, 120)
+		else
+			boton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+
+	actualizar()
+
+	boton.MouseButton1Click:Connect(function()
+		activo = not activo
+		actualizar()
+		callback(activo)
+	end)
+
+	return boton
 end
 
-local function createToggle(parent, text, default, callback)
+local function crearSlider(parent, texto, valorInicial, callback, y)
+	local contenedor = Instance.new("Frame")
+	contenedor.Parent = parent
+	contenedor.BackgroundTransparency = 1
+	contenedor.Size = UDim2.new(1, -10, 0, 50)
+	contenedor.Position = UDim2.new(0, 5, 0, y)
 
-local button = Instance.new("TextButton")  
+	local etiqueta = Instance.new("TextLabel")
+	etiqueta.Parent = contenedor
+	etiqueta.BackgroundTransparency = 1
+	etiqueta.Size = UDim2.new(1, 0, 0, 22)
+	etiqueta.Text = texto .. ": " .. valorInicial .. "%"
+	etiqueta.TextColor3 = Color3.fromRGB(255, 255, 255)
+	etiqueta.TextSize = 13
+	etiqueta.Font = Enum.Font.Gotham
+	etiqueta.TextXAlignment = Enum.TextXAlignment.Left
 
-button.Size = UDim2.new(1, -5, 0, 38)  
-button.BackgroundColor3 = Color3.fromRGB(40, 40, 48)  
-button.TextColor3 = Color3.new(1, 1, 1)  
-button.TextSize = 14  
-button.Font = Enum.Font.Gotham  
-button.BorderSizePixel = 0  
-button.Parent = parent  
+	local barra = Instance.new("Frame")
+	barra.Parent = contenedor
+	barra.BackgroundColor3 = Color3.fromRGB(55, 55, 65)
+	barra.BorderSizePixel = 0
+	barra.Size = UDim2.new(1, 0, 0, 8)
+	barra.Position = UDim2.new(0, 0, 0, 30)
 
-local enabled = default  
+	local relleno = Instance.new("Frame")
+	relleno.Parent = barra
+	relleno.BackgroundColor3 = Color3.fromRGB(100, 80, 220)
+	relleno.BorderSizePixel = 0
+	relleno.Size = UDim2.new(valorInicial / 100, 0, 1, 0)
 
-local function refresh()  
+	local dragging = false
 
-	button.Text =  
-		text .. ": " ..  
-		(enabled and "ON" or "OFF")  
+	local function cambiar(input)
+		local porcentaje = math.clamp(
+			(input.Position.X - barra.AbsolutePosition.X)
+			/ barra.AbsoluteSize.X,
+			0,
+			1
+		)
 
-	if enabled then  
-		button.BackgroundColor3 =  
-			Color3.fromRGB(100, 45, 95)  
-	else  
-		button.BackgroundColor3 =  
-			Color3.fromRGB(40, 40, 48)  
-	end  
+		local valor = math.floor(porcentaje * 100)
 
-end  
+		relleno.Size = UDim2.new(porcentaje, 0, 1, 0)
+		etiqueta.Text = texto .. ": " .. valor .. "%"
 
-button.MouseButton1Click:Connect(function()  
+		callback(valor)
+	end
 
-	enabled = not enabled  
+	barra.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
 
-	refresh()  
+			dragging = true
+			cambiar(input)
+		end
+	end)
 
-	callback(enabled)  
+	UIS.InputChanged:Connect(function(input)
+		if dragging then
+			if input.UserInputType == Enum.UserInputType.MouseMovement
+				or input.UserInputType == Enum.UserInputType.Touch then
 
-end)  
+				cambiar(input)
+			end
+		end
+	end)
 
-refresh()  
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
 
-return button
-
-end
-
-local function createSlider(parent, text, default, callback)
-
-local container = Instance.new("Frame")  
-
-container.Size =  
-	UDim2.new(1, -5, 0, 48)  
-
-container.BackgroundTransparency = 1  
-container.Parent = parent  
-
-local label = Instance.new("TextLabel")  
-
-label.Size =  
-	UDim2.new(1, 0, 0, 20)  
-
-label.BackgroundTransparency = 1  
-
-label.Text =  
-	text .. ": " ..  
-	math.floor(default) .. "%"  
-
-label.TextColor3 = Color3.new(1, 1, 1)  
-label.TextSize = 13  
-label.Font = Enum.Font.Gotham  
-label.TextXAlignment = Enum.TextXAlignment.Left  
-label.Parent = container  
-
-local slider = Instance.new("TextButton")  
-
-slider.Size =  
-	UDim2.new(1, 0, 0, 10)  
-
-slider.Position =  
-	UDim2.fromOffset(0, 28)  
-
-slider.Text = ""  
-
-slider.BackgroundColor3 =  
-	Color3.fromRGB(65, 65, 75)  
-
-slider.BorderSizePixel = 0  
-slider.Parent = container  
-
-local sc = Instance.new("UICorner")  
-sc.CornerRadius = UDim.new(1, 0)  
-sc.Parent = slider  
-
-local fill = Instance.new("Frame")  
-
-fill.Size =  
-	UDim2.new(default / 100, 0, 1, 0)  
-
-fill.BackgroundColor3 =  
-	Color3.fromRGB(170, 70, 150)  
-
-fill.BorderSizePixel = 0  
-fill.Parent = slider  
-
-local fc = Instance.new("UICorner")  
-fc.CornerRadius = UDim.new(1, 0)  
-fc.Parent = fill  
-
-local active = false  
-
-local function setValue(x)  
-
-	local percent = math.clamp(  
-		(  
-			x - slider.AbsolutePosition.X  
-		) / slider.AbsoluteSize.X * 100,  
-		0,  
-		100  
-	)  
-
-	fill.Size =  
-		UDim2.new(percent / 100, 0, 1, 0)  
-
-	label.Text =  
-		text .. ": " ..  
-		math.floor(percent) .. "%"  
-
-	callback(percent)  
-
-end  
-
-slider.InputBegan:Connect(function(input)  
-
-	if input.UserInputType ==  
-		Enum.UserInputType.MouseButton1  
-		or input.UserInputType ==  
-		Enum.UserInputType.Touch then  
-
-		active = true  
-
-		setValue(input.Position.X)  
-
-	end  
-
-end)  
-
-UIS.InputChanged:Connect(function(input)  
-
-	if not active then  
-		return  
-	end  
-
-	if input.UserInputType ==  
-		Enum.UserInputType.MouseMovement  
-		or input.UserInputType ==  
-		Enum.UserInputType.Touch then  
-
-		setValue(input.Position.X)  
-
-	end  
-
-end)  
-
-UIS.InputEnded:Connect(function(input)  
-
-	if input.UserInputType ==  
-		Enum.UserInputType.MouseButton1  
-		or input.UserInputType ==  
-		Enum.UserInputType.Touch then  
-
-		active = false  
-
-	end  
-
-end)
-
+			dragging = false
+		end
+	end)
 end
 
 --==================================================
 -- GENERAL
 --==================================================
 
-createSection(GeneralTab, "Movement")
+crearToggle(GeneralPage, "Speed", false, function(value)
+	SpeedEnabled = value
+end, 5)
 
-createToggle(
-GeneralTab,
-"Speed",
-false,
-function(value)
+crearSlider(GeneralPage, "Speed", 50, function(value)
+	SpeedPercent = value
+end, 50)
 
-SpeedEnabled = value  
+crearToggle(GeneralPage, "Jump", false, function(value)
+	JumpEnabled = value
+end, 105)
 
-	local character = player.Character  
-
-	if character then  
-
-		local humanoid =  
-			character:FindFirstChildOfClass("Humanoid")  
-
-		if humanoid then  
-
-			humanoid.WalkSpeed =  
-				value  
-				and 16 + (SpeedPercent / 100) * 84  
-				or 16  
-
-		end  
-	end  
-end
-
-)
-
-createSlider(
-GeneralTab,
-"Speed",
-50,
-function(value)
-
-SpeedPercent = value  
-
-	if SpeedEnabled then  
-
-		local character = player.Character  
-
-		if character then  
-
-			local humanoid =  
-				character:FindFirstChildOfClass("Humanoid")  
-
-			if humanoid then  
-
-				humanoid.WalkSpeed =  
-					16 + (value / 100) * 84  
-
-			end  
-		end  
-	end  
-end
-
-)
-
-createToggle(
-GeneralTab,
-"Jump",
-false,
-function(value)
-
-JumpEnabled = value  
-
-	local character = player.Character  
-
-	if character then  
-
-		local humanoid =  
-			character:FindFirstChildOfClass("Humanoid")  
-
-		if humanoid then  
-
-			humanoid.JumpPower =  
-				value  
-				and 50 + (JumpPercent / 100) * 100  
-				or 50  
-
-		end  
-	end  
-end
-
-)
-
-createSlider(
-GeneralTab,
-"Jump",
-50,
-function(value)
-
-JumpPercent = value  
-
-	if JumpEnabled then  
-
-		local character = player.Character  
-
-		if character then  
-
-			local humanoid =  
-				character:FindFirstChildOfClass("Humanoid")  
-
-			if humanoid then  
-
-				humanoid.JumpPower =  
-					50 + (value / 100) * 100  
-
-			end  
-		end  
-	end  
-end
-
-)
+crearSlider(GeneralPage, "Jump", 50, function(value)
+	JumpPercent = value
+end, 150)
 
 --==================================================
 -- COMBAT
 --==================================================
 
-createSection(CombatTab, "Combat")
+crearToggle(CombatPage, "Aimbot", false, function(value)
+	AimbotEnabled = value
+end, 5)
 
--- AIMBOT
+crearToggle(CombatPage, "FOV", true, function(value)
+	FOVEnabled = value
+end, 50)
 
-createToggle(
-CombatTab,
-"Aimbot",
-false,
-function(value)
+crearSlider(CombatPage, "FOV", 50, function(value)
+	FOVPercent = value
+end, 105)
 
-AimbotEnabled = value  
+--==================================================
+-- PLAYER + ESP
+--==================================================
 
-	-- Al apagarlo, liberamos el objetivo.  
-	if not value then  
-		LockedTarget = nil  
-	end  
+local PlayerInfo = Instance.new("TextLabel")
+PlayerInfo.Parent = PlayerPage
+PlayerInfo.BackgroundTransparency = 1
+PlayerInfo.Size = UDim2.new(1, -10, 0, 40)
+PlayerInfo.Position = UDim2.new(0, 5, 0, 5)
+PlayerInfo.Text = "PLAYER"
+PlayerInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayerInfo.TextSize = 16
+PlayerInfo.Font = Enum.Font.GothamBold
 
+local function crearESP(targetPlayer)
+	if targetPlayer == player then
+		return
+	end
+
+	local character = targetPlayer.Character
+
+	if not character then
+		return
+	end
+
+	if character:FindFirstChild("AlwaysOnTopESP") then
+		return
+	end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "AlwaysOnTopESP"
+	highlight.Adornee = character
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.FillColor = Color3.fromRGB(255, 0, 0)
+	highlight.FillTransparency = 0.4
+	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	highlight.OutlineTransparency = 0
+	highlight.Parent = character
 end
 
-)
+local function quitarESP(targetPlayer)
+	if targetPlayer.Character then
+		local esp = targetPlayer.Character:FindFirstChild("AlwaysOnTopESP")
 
--- FOV
-
-createToggle(
-CombatTab,
-"FOV",
-true,
-function(value)
-
-FOVEnabled = value  
-
+		if esp then
+			esp:Destroy()
+		end
+	end
 end
 
-)
-
--- FOV %
-
-createSlider(
-CombatTab,
-"FOV",
-50,
-function(value)
-
-FOVPercent = value  
-
+local function actualizarESP()
+	for _, targetPlayer in ipairs(Players:GetPlayers()) do
+		if targetPlayer ~= player then
+			if ESPPlayerEnabled then
+				crearESP(targetPlayer)
+			else
+				quitarESP(targetPlayer)
+			end
+		end
+	end
 end
 
-)
+crearToggle(PlayerPage, "ESP Player", false, function(value)
+	ESPPlayerEnabled = value
+	actualizarESP()
+end, 50)
 
--- AIM SILENT
--- En este proyecto funciona como asistencia de selección
--- de objetivo, sin modificar remotamente disparos.
+Players.PlayerAdded:Connect(function(targetPlayer)
+	targetPlayer.CharacterAdded:Connect(function()
+		task.wait(0.5)
 
-createToggle(
-CombatTab,
-"Aim Silent",
-false,
-function(value)
+		if ESPPlayerEnabled then
+			crearESP(targetPlayer)
+		end
+	end)
+end)
 
-AimSilentEnabled = value  
+Players.PlayerRemoving:Connect(function(targetPlayer)
+	quitarESP(targetPlayer)
+end)
 
-	if not value and not AimbotEnabled then  
-		LockedTarget = nil  
-	end  
+--==================================================
+-- SETTING
+--==================================================
 
+local SettingText = Instance.new("TextLabel")
+SettingText.Parent = SettingPage
+SettingText.BackgroundTransparency = 1
+SettingText.Size = UDim2.new(1, -10, 0, 120)
+SettingText.Position = UDim2.new(0, 5, 0, 5)
+SettingText.Text = "GOKU BLACK\n\nMenú para tu propio proyecto de Roblox Studio."
+SettingText.TextColor3 = Color3.fromRGB(255, 255, 255)
+SettingText.TextSize = 15
+SettingText.Font = Enum.Font.Gotham
+SettingText.TextWrapped = true
+
+--==================================================
+-- CAMBIO DE PÁGINAS
+--==================================================
+
+local function mostrarPagina(pagina, botonActivo)
+	GeneralPage.Visible = false
+	CombatPage.Visible = false
+	PlayerPage.Visible = false
+	SettingPage.Visible = false
+
+	BotonLista1.TextColor3 = Color3.fromRGB(180, 180, 180)
+	BotonLista2.TextColor3 = Color3.fromRGB(180, 180, 180)
+	BotonLista3.TextColor3 = Color3.fromRGB(180, 180, 180)
+	BotonLista4.TextColor3 = Color3.fromRGB(180, 180, 180)
+
+	pagina.Visible = true
+	botonActivo.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
-)
+BotonLista1.MouseButton1Click:Connect(function()
+	mostrarPagina(GeneralPage, BotonLista1)
+end)
+
+BotonLista2.MouseButton1Click:Connect(function()
+	mostrarPagina(CombatPage, BotonLista2)
+end)
+
+BotonLista3.MouseButton1Click:Connect(function()
+	mostrarPagina(PlayerPage, BotonLista3)
+end)
+
+BotonLista4.MouseButton1Click:Connect(function()
+	mostrarPagina(SettingPage, BotonLista4)
+end)
+
+mostrarPagina(GeneralPage, BotonLista1)
 
 --==================================================
--- SETTINGS
+-- BOTÓN X
 --==================================================
 
-createSection(SettingsTab, "Settings")
+local BotonCerrar = Instance.new("TextButton")
+BotonCerrar.Parent = MainFrame
+BotonCerrar.BackgroundColor3 = Color3.fromRGB(220, 60, 80)
+BotonCerrar.BorderSizePixel = 0
+BotonCerrar.Size = UDim2.new(0, 28, 0, 28)
+BotonCerrar.Position = UDim2.new(1, -40, 0, 15)
+BotonCerrar.Text = "X"
+BotonCerrar.TextColor3 = Color3.fromRGB(255, 255, 255)
+BotonCerrar.TextSize = 12
+BotonCerrar.Font = Enum.Font.GothamBold
 
-createToggle(
-SettingsTab,
-"Infinite Jump",
-false,
-function(value)
+local RedondeadoX = Instance.new("UICorner")
+RedondeadoX.CornerRadius = UDim.new(0, 8)
+RedondeadoX.Parent = BotonCerrar
 
-InfiniteJumpEnabled = value  
-
-end
-
-)
-
-createToggle(
-SettingsTab,
-"Noclip",
-false,
-function(value)
-
-NoclipEnabled = value  
-
-end
-
-)
+BotonCerrar.MouseButton1Click:Connect(function()
+	MainFrame.Visible = false
+end)
 
 --==================================================
--- CÍRCULO FOV
+-- BOTÓN FLOTANTE
 --==================================================
 
-local fovCircle = Instance.new("Frame")
+local BotonFlotante = Instance.new("TextButton")
+BotonFlotante.Name = "GokuBlack"
+BotonFlotante.Parent = ScreenGui
+BotonFlotante.BackgroundColor3 = Color3.fromRGB(75, 65, 210)
+BotonFlotante.BorderSizePixel = 0
+BotonFlotante.Size = UDim2.new(0, 55, 0, 55)
+BotonFlotante.Position = UDim2.new(0.05, 0, 0.2, 0)
+BotonFlotante.Text = "GOKU BLACK"
+BotonFlotante.TextColor3 = Color3.fromRGB(255, 255, 255)
+BotonFlotante.TextSize = 10
+BotonFlotante.Font = Enum.Font.GothamBold
+BotonFlotante.Active = true
+BotonFlotante.Draggable = true
 
-fovCircle.AnchorPoint =
-Vector2.new(0.5, 0.5)
+local RedondeadoFlotante = Instance.new("UICorner")
+RedondeadoFlotante.CornerRadius = UDim.new(1, 0)
+RedondeadoFlotante.Parent = BotonFlotante
 
-fovCircle.Position =
-UDim2.fromScale(0.5, 0.5)
-
-fovCircle.BackgroundTransparency = 1
-fovCircle.Parent = gui
-
-local fovCorner = Instance.new("UICorner")
-
-fovCorner.CornerRadius =
-UDim.new(1, 0)
-
-fovCorner.Parent = fovCircle
-
-local fovStroke = Instance.new("UIStroke")
-
-fovStroke.Thickness = 2
-fovStroke.Color = Color3.new(1, 1, 1)
-fovStroke.Parent = fovCircle
-
-local function updateFOV()
-
-local size =  
-	100 + FOVPercent * 4  
-
-fovCircle.Size =  
-	UDim2.fromOffset(size, size)  
-
-fovCircle.Visible =  
-	FOVEnabled
-
-end
+BotonFlotante.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+end)
 
 --==================================================
--- LÍNEA DE VISIÓN
+-- FOV CIRCLE
 --==================================================
 
-local function hasLineOfSight(targetPart)
+local FOVCircle = Instance.new("Frame")
+FOVCircle.Name = "FOVCircle"
+FOVCircle.Parent = ScreenGui
+FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+FOVCircle.Position = UDim2.fromScale(0.5, 0.5)
+FOVCircle.BackgroundTransparency = 1
+FOVCircle.BorderSizePixel = 0
+FOVCircle.ZIndex = 10
 
-local origin =  
-	camera.CFrame.Position  
+local FOVCorner = Instance.new("UICorner")
+FOVCorner.CornerRadius = UDim.new(1, 0)
+FOVCorner.Parent = FOVCircle
 
-local direction =  
-	targetPart.Position - origin  
-
-local params =  
-	RaycastParams.new()  
-
-params.FilterType =  
-	Enum.RaycastFilterType.Exclude  
-
-params.FilterDescendantsInstances = {  
-	player.Character  
-}  
-
-params.IgnoreWater = true  
-
-local result =  
-	workspace:Raycast(  
-		origin,  
-		direction,  
-		params  
-	)  
-
-if not result then  
-	return true  
-end  
-
-return result.Instance:IsDescendantOf(  
-	targetPart.Parent  
-)
-
-end
+local FOVStroke = Instance.new("UIStroke")
+FOVStroke.Thickness = 2
+FOVStroke.Color = Color3.fromRGB(255, 255, 255)
+FOVStroke.Parent = FOVCircle
 
 --==================================================
--- COMPROBAR SI EL OBJETIVO SIGUE SIENDO VÁLIDO
+-- AIMBOT → HEAD
 --==================================================
 
-local function isTargetValid(target)
+local function getClosestPlayerInFOV()
 
-if not target then  
-	return false  
-end  
+	local closestPlayer = nil
+	local closestDistance = math.huge
 
-if not target.Parent then  
-	return false  
-end  
+	local currentCamera = workspace.CurrentCamera
 
-local character =  
-	target.Parent  
+	if not currentCamera then
+		return nil
+	end
 
-local humanoid =  
-	character:FindFirstChildOfClass("Humanoid")  
+	local viewportSize = currentCamera.ViewportSize
 
-if not humanoid then  
-	return false  
-end  
-
-if humanoid.Health <= 0 then  
-	return false  
-end  
-
-local distance =  
-	(  
-		target.Position -  
-		camera.CFrame.Position  
-	).Magnitude  
-
-if distance > AimMaxDistance then  
-	return false  
-end  
-
-if not hasLineOfSight(target) then  
-	return false  
-end  
-
-return true
-
-end
-
---==================================================
--- BUSCAR NUEVO OBJETIVO
---==================================================
-
-local function findNewTarget()
-
-local center =  
-	Vector2.new(  
-		camera.ViewportSize.X / 2,  
-		camera.ViewportSize.Y / 2  
-	)  
-
-local radius =  
-	50 + AimSilentFOV * 2  
-
-local closest = nil  
-local closestDistance = math.huge  
-
-for _, targetPlayer in  
-	ipairs(Players:GetPlayers()) do  
-
-	if targetPlayer == player then  
-		continue  
-	end  
-
-	local character =  
-		targetPlayer.Character  
-
-	if not character then  
-		continue  
-	end  
-
-	local humanoid =  
-		character:FindFirstChildOfClass(  
-			"Humanoid"  
-		)  
-
-	local head =  
-		character:FindFirstChild("Head")  
-
-	if not humanoid or not head then  
-		continue  
-	end  
-
-	if humanoid.Health <= 0 then  
-		continue  
-	end  
-
-	local distance3D =  
-		(  
-			head.Position -  
-			camera.CFrame.Position  
-		).Magnitude  
-
-	if distance3D > AimMaxDistance then  
-		continue  
-	end  
-
-	local screenPos, visible =  
-		camera:WorldToViewportPoint(  
-			head.Position  
-		)  
-
-	if not visible or screenPos.Z <= 0 then  
-		continue  
-	end  
-
-	local screenPoint =  
-		Vector2.new(  
-			screenPos.X,  
-			screenPos.Y  
-		)  
-
-	local distanceFromCrosshair =  
-		(  
-			screenPoint - center  
-		).Magnitude  
-
-	if distanceFromCrosshair <= radius then  
-
-		if hasLineOfSight(head) then  
-
-			if distanceFromCrosshair <  
-				closestDistance then  
-
-				closestDistance =  
-					distanceFromCrosshair  
-
-				closest = head  
-
-			end  
-
-		end  
-	end  
-end  
-
-return closest
-
-end
-
---==================================================
--- AIM ASSIST
---==================================================
-
-local function aimAtTarget()
-
-if not AimbotEnabled  
-	and not AimSilentEnabled then  
-
-	return  
-end  
-
--- Si ya tenemos objetivo, NO buscamos otro.  
-if LockedTarget then  
-
-	if not isTargetValid(LockedTarget) then  
-		LockedTarget = nil  
-	end  
-
-end  
-
--- Solamente buscamos uno nuevo cuando  
--- no existe un objetivo bloqueado.  
-if not LockedTarget then  
-	LockedTarget = findNewTarget()  
-end  
-
-if not LockedTarget then  
-	return  
-end  
-
--- Vector desde la cámara hasta la cabeza.  
-local direction =  
-	LockedTarget.Position -  
-	camera.CFrame.Position  
-
--- Si el vector es demasiado pequeño,  
--- evitamos una orientación inválida.  
-if direction.Magnitude < 0.001 then  
-	return  
-end  
-
-local targetCFrame =  
-	CFrame.lookAt(  
-		camera.CFrame.Position,  
-		LockedTarget.Position  
-	)  
-
--- Interpolación:  
--- 0.02 = movimiento muy suave  
--- 1 = movimiento inmediato  
-camera.CFrame =  
-	camera.CFrame:Lerp(  
-		targetCFrame,  
-		math.clamp(  
-			AimSmoothness,  
-			0.02,  
-			1  
-		)  
+	local screenCenter = Vector2.new(
+		viewportSize.X / 2,
+		viewportSize.Y / 2
 	)
 
+	local fovRadius = (100 + FOVPercent * 4) / 2
+
+	for _, targetPlayer in ipairs(Players:GetPlayers()) do
+
+		if targetPlayer ~= player then
+
+			local character = targetPlayer.Character
+
+			if character then
+
+				local humanoid =
+					character:FindFirstChildOfClass("Humanoid")
+
+				local head =
+					character:FindFirstChild("Head")
+
+				if humanoid
+					and humanoid.Health > 0
+					and head
+					and head:IsA("BasePart") then
+
+					local screenPosition, visible =
+						currentCamera:WorldToViewportPoint(
+							head.Position
+						)
+
+					if visible and screenPosition.Z > 0 then
+
+						local headPosition =
+							Vector2.new(
+								screenPosition.X,
+								screenPosition.Y
+							)
+
+						local distance =
+							(headPosition - screenCenter).Magnitude
+
+						if distance <= fovRadius
+							and distance < closestDistance then
+
+							closestDistance = distance
+							closestPlayer = targetPlayer
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return closestPlayer
+end
+
+local function updateAimbot()
+
+	if not AimbotEnabled then
+		return
+	end
+
+	local currentCamera = workspace.CurrentCamera
+
+	if not currentCamera then
+		return
+	end
+
+	local targetPlayer = getClosestPlayerInFOV()
+
+	if not targetPlayer then
+		return
+	end
+
+	local character = targetPlayer.Character
+
+	if not character then
+		return
+	end
+
+	local humanoid =
+		character:FindFirstChildOfClass("Humanoid")
+
+	local head =
+		character:FindFirstChild("Head")
+
+	if not humanoid
+		or humanoid.Health <= 0
+		or not head then
+		return
+	end
+
+	local targetCFrame = CFrame.lookAt(
+		currentCamera.CFrame.Position,
+		head.Position
+	)
+
+	currentCamera.CFrame =
+		currentCamera.CFrame:Lerp(
+			targetCFrame,
+			0.20
+		)
 end
 
 --==================================================
--- INFINITE JUMP
+-- MOVIMIENTO
 --==================================================
 
-UIS.JumpRequest:Connect(function()
+local function updateMovement()
 
-if not InfiniteJumpEnabled then  
-	return  
-end  
+	local character = player.Character
 
-local character =  
-	player.Character  
+	if not character then
+		return
+	end
 
-if character then  
+	local humanoid =
+		character:FindFirstChildOfClass("Humanoid")
 
-	local humanoid =  
-		character:FindFirstChildOfClass(  
-			"Humanoid"  
-		)  
+	if not humanoid then
+		return
+	end
 
-	if humanoid then  
+	if SpeedEnabled then
+		humanoid.WalkSpeed =
+			16 + (SpeedPercent / 100) * 84
+	else
+		humanoid.WalkSpeed = 16
+	end
 
-		humanoid:ChangeState(  
-			Enum.HumanoidStateType.Jumping  
-		)  
-
-	end  
+	if JumpEnabled then
+		humanoid.JumpPower =
+			50 + (JumpPercent / 100) * 100
+	else
+		humanoid.JumpPower = 50
+	end
 end
-
-end)
-
---==================================================
--- NOCLIP
---==================================================
-
-RunService.Stepped:Connect(function()
-
-if not NoclipEnabled then  
-	return  
-end  
-
-local character =  
-	player.Character  
-
-if character then  
-
-	for _, part in  
-		ipairs(character:GetDescendants()) do  
-
-		if part:IsA("BasePart") then  
-			part.CanCollide = false  
-		end  
-
-	end  
-end
-
-end)
-
---==================================================
--- BOTÓN CIRCULAR
---==================================================
-
-local openButton =
-Instance.new("TextButton")
-
-openButton.Size =
-UDim2.fromOffset(55, 55)
-
-openButton.Position =
-UDim2.new(0, 18, 0.5, -27)
-
-openButton.Text = "G"
-openButton.TextSize = 25
-openButton.Font =
-Enum.Font.GothamBold
-
-openButton.TextColor3 =
-Color3.new(1, 1, 1)
-
-openButton.BackgroundColor3 =
-Color3.fromRGB(100, 45, 95)
-
-openButton.Parent = gui
-
-local openCorner =
-Instance.new("UICorner")
-
-openCorner.CornerRadius =
-UDim.new(1, 0)
-
-openCorner.Parent =
-openButton
-
-openButton.MouseButton1Click:Connect(function()
-
-main.Visible =  
-	not main.Visible
-
-end)
-
---==================================================
--- CERRAR
---==================================================
-
-closeButton.MouseButton1Click:Connect(function()
-
-main.Visible = false
-
-end)
-
---==================================================
--- RESPAWN
---==================================================
 
 player.CharacterAdded:Connect(function()
-
--- El objetivo anterior deja de ser válido.  
-LockedTarget = nil  
-
-task.wait(1)  
-
-local character =  
-	player.Character  
-
-if not character then  
-	return  
-end  
-
-local humanoid =  
-	character:FindFirstChildOfClass(  
-		"Humanoid"  
-	)  
-
-if humanoid then  
-
-	if SpeedEnabled then  
-
-		humanoid.WalkSpeed =  
-			16 +  
-			(SpeedPercent / 100) * 84  
-
-	end  
-
-	if JumpEnabled then  
-
-		humanoid.JumpPower =  
-			50 +  
-			(JumpPercent / 100) * 100  
-
-	end  
-
-end
-
+	task.wait(0.5)
+	updateMovement()
 end)
 
 --==================================================
--- INICIO
+-- LOOP
 --==================================================
-
-pages.General.Visible = true
-
-tabs.General.BackgroundColor3 =
-Color3.fromRGB(120, 45, 110)
-
-updateFOV()
 
 RunService.RenderStepped:Connect(function()
 
-aimAtTarget()  
-updateFOV()
+	local diameter = 100 + (FOVPercent * 4)
 
-end) 
+	FOVCircle.Size = UDim2.fromOffset(
+		diameter,
+		diameter
+	)
+
+	FOVCircle.Visible = FOVEnabled
+
+	updateMovement()
+	updateAimbot()
+
+end)
+
+print("GOKU BLACK cargado correctamente")
